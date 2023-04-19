@@ -106,22 +106,20 @@ public class Board
         return bar;
     }
 
-    public List<int> Search(List<int> coords)
+    public List<int>? Search(List<int> coords)
     {
         // Console.WriteLine($"Searching coords: {string.Join(", ", coords)}");
         if (coords.Count == 1) 
         {
             int[] rowIndex = GetRowIndex(coords[0]);
-            Console.WriteLine($"First coord: {coords[0]}, Row Index: {string.Join(", ", rowIndex)}");
+            // Console.WriteLine($"First coord: {coords[0]}, Row Index: {string.Join(", ", rowIndex)}");
             if (this.board[rowIndex[0], rowIndex[1]] == Util.Colored(Util.Color.Red, "X"))
             {
-                Console.WriteLine($"{coords[0]} is a mine.");
-                return coords;
+                return null;
             }
 
             if (!(this.board[rowIndex[0], rowIndex[1]] == " "))
             {
-                Console.WriteLine($"{coords[0]} is not zero, it's {this.board[rowIndex[0], rowIndex[1]]}");
                 return coords;
             }
         }
@@ -145,10 +143,11 @@ public class Board
         {
             coords = coords.Concat(foundCoords).ToList<int>();
             coords = Search(coords);
+            
         }
         else 
         {
-            Console.WriteLine($"Zeroes: {string.Join(", ", coords)}");
+            // Console.WriteLine($"Zeroes: {string.Join(", ", coords)}");
             foreach (int coord in coords)
             {
                 totalCoords.Add(coord);
@@ -172,23 +171,6 @@ public class Board
     {
         int[] rowIndex = GetRowIndex(coord);
         this.playerBoard[rowIndex[0], rowIndex[1]] = this.board[rowIndex[0], rowIndex[1]];
-    }
-    
-    public int inputToCoord(string input)
-    {
-        int coord = 0;
-        // Mark command
-        if (Char.IsLetter(input[^1]))
-        {
-            coord += Int32.Parse(input.Substring(1, input.Length - 2)) * (this.size - 1);
-            coord += Board.CHARS.IndexOf(input[0].ToString()) + 1;
-        }
-        else
-        {
-            coord += Int32.Parse(input.Substring(1, input.Length - 1)) * (this.size - 1);
-            coord += Board.CHARS.IndexOf(input[0].ToString()) + 1;
-        }
-        return coord;
     }
 
     int[] GetRowIndex(int coord)
@@ -241,5 +223,93 @@ public class Board
             }
         }
         return nearbyMines;
+    }
+
+    public int? validateInput(string input)
+    {
+        bool mark = Char.IsLetter(input.Last());
+        int num = 0;
+        
+        if (mark)
+        {
+            if (!(Char.ToUpper(input.Last()) == 'M')) {return null;}
+            num = Int32.Parse(input.Substring(1, input.Length - 2));
+        }
+        else
+        {
+            num = Int32.Parse(input.Substring(1, input.Length - 1));
+        }
+        
+        bool goodChar = Board.CHARS.Contains(char.ToUpper(input[0]));
+        bool goodNum = num > 0 && num <= this.size;
+
+        if (goodChar && goodNum) 
+        {
+            int coord = 0;
+            // Changes number substring depending if input is a mark command or not
+            if (Char.IsLetter(input[^1]))
+            {
+                coord += (Int32.Parse(input.Substring(1, input.Length - 2)) - 1) * (this.size);
+                coord += Board.CHARS.IndexOf(input[0].ToString().ToUpper());
+            }
+            else
+            {
+                coord += (Int32.Parse(input.Substring(1, input.Length - 1)) - 1) * (this.size);
+                coord += Board.CHARS.IndexOf(input[0].ToString().ToUpper());
+            }
+            return coord;
+        } 
+        else {return null;}
+    }
+
+    public void Mark(int coord)
+    {
+        int[] rowIndex = GetRowIndex(coord);
+        bool alreadyMarked = this.playerBoard[rowIndex[0], rowIndex[1]] == Util.Colored(Util.Color.Red, "M");
+        bool alreadyRevealed = this.playerBoard[rowIndex[0], rowIndex[1]] != "#";
+        if (alreadyMarked)
+        {
+            this.playerBoard[rowIndex[0], rowIndex[1]] = "#";
+            return;
+        }
+        
+        if (!(alreadyRevealed))
+        {
+            this.playerBoard[rowIndex[0], rowIndex[1]] = Util.Colored(Util.Color.Red, "M");
+        }
+    }
+
+    public bool Win()
+    {
+        string[,] winBoard = this.playerBoard;
+        for (int i = 0; i < this.size; i++)
+        {
+            for (int j = 0; j < this.size; j++)
+            {
+                if (winBoard[i, j] == Util.Colored(Util.Color.Red, "M"))
+                {
+                    winBoard[i, j] = Util.Colored(Util.Color.Red, "X");
+                }
+            }
+        }
+        string winBoardString = "";
+        for (int i = 0; i < this.size; i++)
+        {
+            for (int j = 0; j < this.size; j++)
+            {
+                winBoardString += winBoard[i, j];
+            }
+        }
+
+        string boardString = "";
+        for (int i = 0; i < this.size; i++)
+        {
+            for (int j = 0; j < this.size; j++)
+            {
+                boardString += this.board[i, j];
+            }
+        }
+
+        if (winBoardString == boardString) {return true;} else {return false;}
     } 
 }
