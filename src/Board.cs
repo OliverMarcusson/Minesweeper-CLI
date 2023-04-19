@@ -101,7 +101,7 @@ public class Board
 
     public List<int> Search(List<int> coords)
     {
-        Console.WriteLine($"Searching coords: {string.Join(", ", coords)}");
+        // Console.WriteLine($"Searching coords: {string.Join(", ", coords)}");
         if (coords.Count == 1) 
         {
             int[] rowIndex = GetRowIndex(coords[0]);
@@ -118,7 +118,6 @@ public class Board
             }
         }
 
-        // List<int> oldCoords = new List<int>(coords);
         List<int> foundCoords = new List<int>();
         foreach (int coord in coords)
         {
@@ -126,6 +125,8 @@ public class Board
             foreach (int nearbyCoord in nearbyCoords)
             {
                 int[] rowIndex = GetRowIndex(nearbyCoord);
+                // if (this.board[rowIndex[0], rowIndex[1]] == "0") {Console.WriteLine($"{nearbyCoord} is zero.");}
+                // if (coords.Contains(nearbyCoord)) {Console.WriteLine($"{nearbyCoord} is already found.");}
                 if (this.board[rowIndex[0], rowIndex[1]] == "0" && !(coords.Contains(nearbyCoord)))
                 {
                     foundCoords.Add(nearbyCoord);
@@ -138,10 +139,9 @@ public class Board
             // Console.WriteLine($"Found coords: {string.Join(", ", foundCoords)}");
             // List<int> totalCoords = new List<int>();
             coords = coords.Concat(foundCoords).ToList<int>();
-            Thread.Sleep(5000);
-            Search(coords);
+            coords = Search(coords);
         }
-
+        
         return coords;
     }
 
