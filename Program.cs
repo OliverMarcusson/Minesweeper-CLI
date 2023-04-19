@@ -1,4 +1,4 @@
 ﻿using System;
 
-Board board = new Board(8,10);
-board.display();
+Board board = new Board(10,25);
+board.Display();

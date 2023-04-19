@@ -6,6 +6,7 @@ public class Board
     public int mines;
     int[] mineCoords;
     public string [,] board;
+    public string [,] playerBoard;
     Random rand = new Random();
 
     public Board(int size, int mines)
@@ -14,6 +15,7 @@ public class Board
         this.mines = mines;
         this.mineCoords = new int[mines];
         this.board = new string[size, size];
+        this.playerBoard = new string[size, size];
 
         // Creates board
         for (int i = 0; i < size; i++)
@@ -21,6 +23,7 @@ public class Board
             for (int j = 0; j < size; j++)
             {
                 this.board[i, j] = "#";
+                this.playerBoard[i, j] = "#";
             }
         }
         
@@ -29,51 +32,16 @@ public class Board
         while (placedMines != this.mines) {
             coordToMine = rand.Next(0, (int)(Math.Pow(size, 2))); // Gets random integer between 0 and size^2 - 1
             int[] rowIndex = GetRowIndex(coordToMine);
-            if (this.board[rowIndex[0], rowIndex[1]] != Color("red", "X"))
+            if (this.board[rowIndex[0], rowIndex[1]] != Util.Colored(Util.Color.Red, "X"))
             {
-                this.board[rowIndex[0], rowIndex[1]] = Color("red", "X");
-                Console.WriteLine($"Marked {rowIndex[0]}, {rowIndex[1]}.");
+                this.board[rowIndex[0], rowIndex[1]] = Util.Colored(Util.Color.Red, "X");
                 this.mineCoords[placedMines] = coordToMine;
                 placedMines += 1;
             }
         }
     }
 
-    string Color(string color, string text) {
-        string colorString = "";
-        string reset = "\x1b[0m";
-
-        switch (color)
-        {
-            case "red":
-                colorString = "\x1b[91m";
-                break;
-        }
-        
-        return $"{colorString}{text}{reset}";
-    }
-
-    public int[] GetRowIndex(int coord)
-    {
-        int row = (int)Math.Floor((double)(coord / this.size));
-        int index = coord % this.size;
-        int[] rowIndex = {row, index};
-        return rowIndex;
-    } 
-
-    private string Bar()
-    {
-        string bar = "   ";
-        bar += "+";
-            for (int i = 0; i < this.size; i++)
-            {
-                bar += (i == this.size - 1 ? "---" : "----");
-            }
-            bar += "+";
-        
-        return bar;
-    }
-    public void display() {
+    public void Display() {
         Console.WriteLine(this.Bar());
         for (int i = 0; i < this.size; i++)
         {
@@ -87,4 +55,43 @@ public class Board
             Console.WriteLine(this.Bar());
         }
     }
+
+    private string Bar()
+    {
+        string bar = "   ";
+        bar += "+";
+            for (int i = 0; i < this.size; i++)
+            {
+                bar += (i == this.size - 1 ? "---" : "---+");
+            }
+            bar += "+";
+        
+        return bar;
+    }
+
+    public int[] GetRowIndex(int coord)
+    {
+        int row = (int)Math.Floor((double)(coord / this.size));
+        int index = coord % this.size;
+        int[] rowIndex = {row, index};
+        return rowIndex;
+    }
+
+    int[] GetNearbyCoords(int coord)
+    {
+        int[] nearbyCoords = {coord - this.size - 1, coord - this.size, coord - this.size + 1, coord - 1, coord + 1, coord + this.size - 1, coord + this.size, coord + this.size + 1};
+        foreach (int nearbyCoord in nearbyCoords)
+        {
+            if ( nearbyCoord !< 0 || nearbyCoord !> (int)Math.Pow(this.size, 2) - 1)
+            {
+                
+            }
+        }
+        
+        return nearbyCoords;
+    }
+    int GetNearbyMines(int coord)
+    {
+        return 0;
+    } 
 }
