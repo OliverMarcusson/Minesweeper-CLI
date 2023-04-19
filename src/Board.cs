@@ -1,4 +1,7 @@
 using System;
+using System.Collections;
+using System.Linq;
+using System.Threading;
 
 public class Board
 {
@@ -17,7 +20,7 @@ public class Board
         this.board = new string[size, size];
         this.playerBoard = new string[size, size];
 
-        // Creates board
+        // Generates boards
         for (int i = 0; i < size; i++)
         {
             for (int j = 0; j < size; j++)
@@ -27,6 +30,7 @@ public class Board
             }
         }
         
+        // Places mines at random locations
         int coordToMine;
         int placedMines = 0;
         while (placedMines != this.mines) {
@@ -39,9 +43,28 @@ public class Board
                 placedMines += 1;
             }
         }
+
+        // Marking tiles on this.board with correct numbers.
+        int coord;
+        int[] newRowIndex;
+        int nearbyMines;
+        for (int i = 0; i < this.size; i++)
+        {
+            for (int j = 0; j < this.size; j++)
+            {
+                newRowIndex = new int[]{i, j};
+                coord = GetCoord(newRowIndex);
+                if (!(this.board[i, j] == Util.Colored(Util.Color.Red, "X")))
+                {
+                    nearbyMines = GetNearbyMines(coord);
+                    this.board[i, j] = nearbyMines.ToString();
+                }
+            }
+        }
     }
 
     public void Display() {
+        string CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         Console.WriteLine(this.Bar());
         for (int i = 0; i < this.size; i++)
         {
@@ -54,6 +77,13 @@ public class Board
             Console.Write("|\n");
             Console.WriteLine(this.Bar());
         }
+
+        string characters = "     ";
+        for (int i = 0; i < this.size; i++)
+        {
+            characters += i != size ? $"{CHARS[i]}   " : $"{CHARS[i]}";
+        }
+        Console.WriteLine(characters);
     }
 
     private string Bar()
@@ -69,7 +99,53 @@ public class Board
         return bar;
     }
 
-    public int[] GetRowIndex(int coord)
+    public List<int> Search(List<int> coords)
+    {
+        Console.WriteLine($"Searching coords: {string.Join(", ", coords)}");
+        if (coords.Count == 1) 
+        {
+            int[] rowIndex = GetRowIndex(coords[0]);
+            if (this.board[rowIndex[0], rowIndex[1]] == Util.Colored(Util.Color.Red, "X"))
+            {
+                Console.WriteLine($"{coords[0]} is a mine.");
+                return coords;
+            }
+
+            if (!(this.board[rowIndex[0], rowIndex[1]] == "0"))
+            {
+                Console.WriteLine($"{coords[0]} is not zero, it's {this.board[rowIndex[0], rowIndex[1]]}");
+                return coords;
+            }
+        }
+
+        // List<int> oldCoords = new List<int>(coords);
+        List<int> foundCoords = new List<int>();
+        foreach (int coord in coords)
+        {
+            List<int> nearbyCoords = GetNearbyCoords(coord);
+            foreach (int nearbyCoord in nearbyCoords)
+            {
+                int[] rowIndex = GetRowIndex(nearbyCoord);
+                if (this.board[rowIndex[0], rowIndex[1]] == "0" && !(coords.Contains(nearbyCoord)))
+                {
+                    foundCoords.Add(nearbyCoord);
+                }
+            }
+        }
+
+        if (foundCoords.Count > 0)
+        {
+            // Console.WriteLine($"Found coords: {string.Join(", ", foundCoords)}");
+            // List<int> totalCoords = new List<int>();
+            coords = coords.Concat(foundCoords).ToList<int>();
+            Thread.Sleep(5000);
+            Search(coords);
+        }
+
+        return coords;
+    }
+
+    int[] GetRowIndex(int coord)
     {
         int row = (int)Math.Floor((double)(coord / this.size));
         int index = coord % this.size;
@@ -77,21 +153,43 @@ public class Board
         return rowIndex;
     }
 
-    int[] GetNearbyCoords(int coord)
+    int GetCoord(int[] rowIndex)
     {
-        int[] nearbyCoords = {coord - this.size - 1, coord - this.size, coord - this.size + 1, coord - 1, coord + 1, coord + this.size - 1, coord + this.size, coord + this.size + 1};
+        int coord = rowIndex[0] * this.size + rowIndex[1];
+        return coord;
+    }
+
+    List<int> GetNearbyCoords(int coord)
+    {
+        List<int> nearbyCoords = new List<int>{coord - this.size - 1, coord - this.size, coord - this.size + 1, coord - 1, coord + 1, coord + this.size - 1, coord + this.size, coord + this.size + 1};
+        List<int> toReturn = new List<int>{};
         foreach (int nearbyCoord in nearbyCoords)
         {
-            if ( nearbyCoord !< 0 || nearbyCoord !> (int)Math.Pow(this.size, 2) - 1)
+            if (!(nearbyCoord < 0) && !(nearbyCoord > (int)Math.Pow(this.size, 2) - 1))
             {
-                
+
+                if (!(coord % this.size == 0 && nearbyCoord % this.size == this.size - 1) && !(coord % this.size == this.size - 1 && nearbyCoord % this.size == 0))
+                {
+                    toReturn.Add(nearbyCoord);
+                }
             }
         }
-        
-        return nearbyCoords;
+        // Console.WriteLine($"Coords to return: {string.Join(", ", toReturn)}\n");
+        return toReturn;
     }
     int GetNearbyMines(int coord)
     {
-        return 0;
+        List<int> nearbyCoords = GetNearbyCoords(coord);
+        int nearbyMines = 0;
+
+        foreach (int nearbyCoord in nearbyCoords)
+        {
+            int[] rowIndex = GetRowIndex(nearbyCoord);
+            if (this.board[rowIndex[0], rowIndex[1]] == Util.Colored(Util.Color.Red, "X"))
+            {
+                nearbyMines++;
+            }
+        }
+        return nearbyMines;
     } 
 }
