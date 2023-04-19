@@ -5,6 +5,7 @@ using System.Threading;
 
 public class Board
 {
+    static string CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     public int size;
     public int mines;
     int[] mineCoords;
@@ -57,14 +58,20 @@ public class Board
                 if (!(this.board[i, j] == Util.Colored(Util.Color.Red, "X")))
                 {
                     nearbyMines = GetNearbyMines(coord);
-                    this.board[i, j] = nearbyMines.ToString();
+                    if (nearbyMines == 0)
+                    {
+                        this.board[i, j] = " ";
+                    }
+                    else
+                    {
+                        this.board[i, j] = nearbyMines.ToString();
+                    }
                 }
             }
         }
     }
 
-    public void Display() {
-        string CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    public void Display(string[,] board) {
         Console.WriteLine(this.Bar());
         for (int i = 0; i < this.size; i++)
         {
@@ -72,7 +79,7 @@ public class Board
             for (int j = 0; j < this.size; j++)
             {
                 Console.Write("| ");
-                Console.Write($"{this.board[i, j]} ");
+                Console.Write($"{board[i, j]} ");
             }
             Console.Write("|\n");
             Console.WriteLine(this.Bar());
@@ -105,13 +112,14 @@ public class Board
         if (coords.Count == 1) 
         {
             int[] rowIndex = GetRowIndex(coords[0]);
+            Console.WriteLine($"First coord: {coords[0]}, Row Index: {string.Join(", ", rowIndex)}");
             if (this.board[rowIndex[0], rowIndex[1]] == Util.Colored(Util.Color.Red, "X"))
             {
                 Console.WriteLine($"{coords[0]} is a mine.");
                 return coords;
             }
 
-            if (!(this.board[rowIndex[0], rowIndex[1]] == "0"))
+            if (!(this.board[rowIndex[0], rowIndex[1]] == " "))
             {
                 Console.WriteLine($"{coords[0]} is not zero, it's {this.board[rowIndex[0], rowIndex[1]]}");
                 return coords;
@@ -125,24 +133,62 @@ public class Board
             foreach (int nearbyCoord in nearbyCoords)
             {
                 int[] rowIndex = GetRowIndex(nearbyCoord);
-                // if (this.board[rowIndex[0], rowIndex[1]] == "0") {Console.WriteLine($"{nearbyCoord} is zero.");}
-                // if (coords.Contains(nearbyCoord)) {Console.WriteLine($"{nearbyCoord} is already found.");}
-                if (this.board[rowIndex[0], rowIndex[1]] == "0" && !(coords.Contains(nearbyCoord)))
+                if (this.board[rowIndex[0], rowIndex[1]] == " " && !(coords.Contains(nearbyCoord)) && !(foundCoords.Contains(nearbyCoord)))
                 {
                     foundCoords.Add(nearbyCoord);
                 }
             }
         }
 
+        List<int> totalCoords = new List<int>();
         if (foundCoords.Count > 0)
         {
-            // Console.WriteLine($"Found coords: {string.Join(", ", foundCoords)}");
-            // List<int> totalCoords = new List<int>();
             coords = coords.Concat(foundCoords).ToList<int>();
             coords = Search(coords);
         }
+        else 
+        {
+            Console.WriteLine($"Zeroes: {string.Join(", ", coords)}");
+            foreach (int coord in coords)
+            {
+                totalCoords.Add(coord);
+                List<int> nearbyCoords = GetNearbyCoords(coord);
+                foreach (int nearbyCoord in nearbyCoords)
+                {
+                    // 
+                    if (!(totalCoords.Contains(nearbyCoord)) && !(coords.Contains(nearbyCoord)))
+                    {
+                        totalCoords.Add(nearbyCoord);
+                    }
+                }
+            }
+            return totalCoords;
+        }
         
         return coords;
+    }
+
+    public void Reveal(int coord)
+    {
+        int[] rowIndex = GetRowIndex(coord);
+        this.playerBoard[rowIndex[0], rowIndex[1]] = this.board[rowIndex[0], rowIndex[1]];
+    }
+    
+    public int inputToCoord(string input)
+    {
+        int coord = 0;
+        // Mark command
+        if (Char.IsLetter(input[^1]))
+        {
+            coord += Int32.Parse(input.Substring(1, input.Length - 2)) * (this.size - 1);
+            coord += Board.CHARS.IndexOf(input[0].ToString()) + 1;
+        }
+        else
+        {
+            coord += Int32.Parse(input.Substring(1, input.Length - 1)) * (this.size - 1);
+            coord += Board.CHARS.IndexOf(input[0].ToString()) + 1;
+        }
+        return coord;
     }
 
     int[] GetRowIndex(int coord)
@@ -161,14 +207,18 @@ public class Board
 
     List<int> GetNearbyCoords(int coord)
     {
-        List<int> nearbyCoords = new List<int>{coord - this.size - 1, coord - this.size, coord - this.size + 1, coord - 1, coord + 1, coord + this.size - 1, coord + this.size, coord + this.size + 1};
-        List<int> toReturn = new List<int>{};
+        List<int> nearbyCoords = new List<int>{coord - this.size - 1, coord - this.size, coord - this.size + 1, 
+                                               coord - 1, coord + 1, coord + this.size - 1, 
+                                               coord + this.size, coord + this.size + 1};
+        List<int> toReturn = new List<int>();
         foreach (int nearbyCoord in nearbyCoords)
         {
-            if (!(nearbyCoord < 0) && !(nearbyCoord > (int)Math.Pow(this.size, 2) - 1))
+            bool notOutOfRange = !(nearbyCoord < 0) && !(nearbyCoord > (int)Math.Pow(this.size, 2) - 1);
+            if (notOutOfRange)
             {
-
-                if (!(coord % this.size == 0 && nearbyCoord % this.size == this.size - 1) && !(coord % this.size == this.size - 1 && nearbyCoord % this.size == 0))
+                bool coordOnLeftEdge = coord % this.size == 0;
+                bool coordOnRightEdge = coord % this.size == this.size - 1;
+                if (!(coordOnLeftEdge && nearbyCoord % this.size == this.size - 1) && !(coordOnRightEdge && nearbyCoord % this.size == 0))
                 {
                     toReturn.Add(nearbyCoord);
                 }
