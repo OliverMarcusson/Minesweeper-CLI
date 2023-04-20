@@ -8,7 +8,7 @@ public class Board
     static string CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     public int size;
     public int mines;
-    int[] mineCoords;
+    public int[] mineCoords;
     public string [,] board;
     public string [,] playerBoard;
     Random rand = new Random();
@@ -240,7 +240,10 @@ public class Board
             num = Int32.Parse(input.Substring(1, input.Length - 1));
         }
         
-        bool goodChar = Board.CHARS.Contains(char.ToUpper(input[0]));
+        bool goodChar = false;
+        try {goodChar = Board.CHARS.Contains(char.ToUpper(input[0]));}
+        catch {return null;}
+        
         bool goodNum = num > 0 && num <= this.size;
 
         if (goodChar && goodNum) 
@@ -281,7 +284,7 @@ public class Board
 
     public bool Win()
     {
-        string[,] winBoard = this.playerBoard;
+        string[,] winBoard = this.playerBoard.Clone() as string[,];
         for (int i = 0; i < this.size; i++)
         {
             for (int j = 0; j < this.size; j++)

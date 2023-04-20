@@ -6,6 +6,7 @@
     <RootNamespace>Minesweeper_CLI</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <publishSingleFile>true</publishSingleFile>
   </PropertyGroup>
 
 </Project>
